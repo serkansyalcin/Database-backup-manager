@@ -8,7 +8,7 @@
     },
     "authors": [
         {
-            "name": "serkansyalcin",
+            "name": "Serkan Syalcin",
             "email": "serkan.syalcin@hotmail.com"
         }
     ],
@@ -19,6 +19,12 @@
             ]
         }
     },
-    "keywords": ["laravel", "Database", "Backup", "Manager", "csv", "json", "xml"],
-    "require": {}
+    "keywords": ["laravel", "database", "backup", "manager", "csv", "json", "xml"],
+    "require": {
+        "php": ">=7.4",
+        "illuminate/support": "^7.0|^8.0|^9.0|^10.0|^11.0"
+    },
+    "license": "MIT",
+    "minimum-stability": "stable",
+    "prefer-stable": true
 }
