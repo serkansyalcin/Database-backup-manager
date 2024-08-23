@@ -69,17 +69,30 @@ class BackupDatabase extends Command
 
     protected function backupAsCsv($filepath)
     {
-        // CSV backup creation process
-        $command = "mysqldump --tab=" . dirname($filepath) . " --fields-terminated-by=',' --fields-enclosed-by='\"' --fields-escaped-by='\\' --lines-terminated-by='\n' --user=" . env('DB_USERNAME') . " --password=" . env('DB_PASSWORD') . " --host=" . env('DB_HOST') . " " . config('database.connections.mysql.database');
-        $result = null;
-        $returnVar = null;
+        $pdo = new \PDO('mysql:host=' . env('DB_HOST') . ';dbname=' . config('database.connections.mysql.database'), env('DB_USERNAME'), env('DB_PASSWORD'));
+        $tables = $pdo->query('SHOW TABLES')->fetchAll(\PDO::FETCH_COLUMN);
 
-        exec($command, $result, $returnVar);
+        $csvFile = fopen($filepath, 'w');
 
-        if ($returnVar !== 0) {
-            $this->error('Error creating CSV backup: ' . implode("\n", $result));
-            return 1;
+        foreach ($tables as $table) {
+            // Write table name
+            fputcsv($csvFile, [$table]);
+
+            // Write table headers
+            $headers = $pdo->query("SHOW COLUMNS FROM `$table`")->fetchAll(\PDO::FETCH_COLUMN);
+            fputcsv($csvFile, $headers);
+
+            // Write table data
+            $rows = $pdo->query("SELECT * FROM `$table`")->fetchAll(\PDO::FETCH_ASSOC);
+            foreach ($rows as $row) {
+                fputcsv($csvFile, $row);
+            }
+
+            // Add an empty line between tables
+            fputcsv($csvFile, []);
         }
+
+        fclose($csvFile);
     }
 
     protected function backupAsJson($filepath)
