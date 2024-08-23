@@ -97,16 +97,23 @@ class BackupDatabase extends Command
 
     protected function backupAsJson($filepath)
     {
-        // JSON backup creation process
-        $command = "mysqldump --user=" . env('DB_USERNAME') . " --password=" . env('DB_PASSWORD') . " --host=" . env('DB_HOST') . " --tab=" . dirname($filepath) . " --fields-terminated-by=',' --fields-enclosed-by='\"' --fields-escaped-by='\\' --lines-terminated-by='\n' " . config('database.connections.mysql.database');
-        $result = null;
-        $returnVar = null;
+        $pdo = new \PDO('mysql:host=' . env('DB_HOST') . ';dbname=' . config('database.connections.mysql.database'), env('DB_USERNAME'), env('DB_PASSWORD'));
+        $tables = $pdo->query('SHOW TABLES')->fetchAll(\PDO::FETCH_COLUMN);
 
-        exec($command, $result, $returnVar);
+        $backupData = [];
 
-        if ($returnVar !== 0) {
-            $this->error('Error creating JSON backup: ' . implode("\n", $result));
-            return 1;
+        foreach ($tables as $table) {
+            $tableData = [];
+            $headers = $pdo->query("SHOW COLUMNS FROM `$table`")->fetchAll(\PDO::FETCH_COLUMN);
+
+            $rows = $pdo->query("SELECT * FROM `$table`")->fetchAll(\PDO::FETCH_ASSOC);
+            foreach ($rows as $row) {
+                $tableData[] = $row;
+            }
+
+            $backupData[$table] = $tableData;
         }
+
+        file_put_contents($filepath, json_encode($backupData, JSON_PRETTY_PRINT));
     }
 }
