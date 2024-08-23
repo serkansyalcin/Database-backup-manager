@@ -24,11 +24,20 @@ class BackupDatabase extends Command
         $filename = $database . '-' . date('Y-m-d-H-i-s') . '.' . $format;
         $filepath = storage_path('app/backups/' . $filename);
 
-        if ($format === 'sql') {
-            $this->backupAsSql($filepath);
-        } else {
+        // Supported formats for backup
+        $supportedFormats = ['sql', 'csv', 'json'];
+        if (!in_array($format, $supportedFormats)) {
             $this->error('Unsupported format: ' . $format);
             return 1;
+        }
+
+        // DATABASE backup process
+        if ($format === 'sql') {
+            $this->backupAsSql($filepath);
+        } elseif ($format === 'csv') {
+            $this->backupAsCsv($filepath);
+        } elseif ($format === 'json') {
+            $this->backupAsJson($filepath);
         }
 
         $this->info('Database backup completed: ' . $filepath);
@@ -36,14 +45,46 @@ class BackupDatabase extends Command
 
     protected function backupAsSql($filepath)
     {
-        $command = sprintf(
-            'mysqldump -u%s -p%s %s > %s',
-            config('database.connections.mysql.username'),
-            config('database.connections.mysql.password'),
-            config('database.connections.mysql.database'),
-            $filepath
-        );
+        // SQL backup creation process
+        $command = "mysqldump --user=" . env('DB_USERNAME') . " --password=" . env('DB_PASSWORD') . " --host=" . env('DB_HOST') . " " . config('database.connections.mysql.database') . " > " . $filepath;
+        $result = null;
+        $returnVar = null;
 
-        system($command);
+        exec($command, $result, $returnVar);
+
+        if ($returnVar !== 0) {
+            $this->error('Error creating SQL backup: ' . implode("\n", $result));
+            return 1;
+        }
+    }
+
+    protected function backupAsCsv($filepath)
+    {
+        // CSV backup creation process
+        $command = "mysqldump --tab=" . dirname($filepath) . " --fields-terminated-by=',' --fields-enclosed-by='\"' --fields-escaped-by='\\' --lines-terminated-by='\n' --user=" . env('DB_USERNAME') . " --password=" . env('DB_PASSWORD') . " --host=" . env('DB_HOST') . " " . config('database.connections.mysql.database');
+        $result = null;
+        $returnVar = null;
+
+        exec($command, $result, $returnVar);
+
+        if ($returnVar !== 0) {
+            $this->error('Error creating CSV backup: ' . implode("\n", $result));
+            return 1;
+        }
+    }
+
+    protected function backupAsJson($filepath)
+    {
+        // JSON backup creation process
+        $command = "mysqldump --user=" . env('DB_USERNAME') . " --password=" . env('DB_PASSWORD') . " --host=" . env('DB_HOST') . " --tab=" . dirname($filepath) . " --fields-terminated-by=',' --fields-enclosed-by='\"' --fields-escaped-by='\\' --lines-terminated-by='\n' " . config('database.connections.mysql.database');
+        $result = null;
+        $returnVar = null;
+
+        exec($command, $result, $returnVar);
+
+        if ($returnVar !== 0) {
+            $this->error('Error creating JSON backup: ' . implode("\n", $result));
+            return 1;
+        }
     }
 }
