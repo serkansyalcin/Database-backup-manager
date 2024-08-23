@@ -22,13 +22,19 @@ class BackupDatabase extends Command
         $format = $this->option('format');
         $database = config('database.connections.mysql.database');
         $filename = $database . '-' . date('Y-m-d-H-i-s') . '.' . $format;
-        $filepath = storage_path('app/backups/' . $filename);
+        $directoryPath = storage_path('app/backups');
+        $filepath = $directoryPath . '/' . $filename;
 
         // Supported formats for backup
         $supportedFormats = ['sql', 'csv', 'json'];
         if (!in_array($format, $supportedFormats)) {
             $this->error('Unsupported format: ' . $format);
             return 1;
+        }
+
+        // Ensure the backups directory exists
+        if (!file_exists($directoryPath)) {
+            mkdir($directoryPath, 0755, true);
         }
 
         // DATABASE backup process
@@ -38,6 +44,9 @@ class BackupDatabase extends Command
             $this->backupAsCsv($filepath);
         } elseif ($format === 'json') {
             $this->backupAsJson($filepath);
+        }else {
+            $this->error('Unsupported format: ' . $format);
+            return 1;
         }
 
         $this->info('Database backup completed: ' . $filepath);
