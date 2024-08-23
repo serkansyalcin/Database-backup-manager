@@ -1,0 +1,24 @@
+{
+    "name": "serkansyalcin/database-backup-manager",
+    "description": "A Laravel package for managing database backups.",
+    "autoload": {
+        "psr-4": {
+            "DatabaseBackupManager\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "serkansyalcin",
+            "email": "serkan.syalcin@hotmail.com"
+        }
+    ],
+    "extra": {
+        "laravel": {
+            "providers": [
+                "DatabaseBackupManager\\Providers\\BackupServiceProvider"
+            ]
+        }
+    },
+    "keywords": ["laravel", "Database", "Backup", "Manager", "csv", "json", "xml"],
+    "require": {}
+}
